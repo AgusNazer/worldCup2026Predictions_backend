@@ -15,6 +15,7 @@ app = FastAPI(
 )
 
 # CORS - Restrict to frontend origin only
+print("CORS_ORIGINS =", os.getenv("CORS_ORIGINS"))
 app.add_middleware(
     CORSMiddleware,
     allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:3000").split(","),
