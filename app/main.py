@@ -8,6 +8,14 @@ from app.routes.rankings import router as rankings_router
 
 from fastapi.middleware.cors import CORSMiddleware
 
+#para probar endpoint de la db
+from app.seeds.matches_2026 import seed_matches
+
+@app.post("/admin/seed-matches")
+def seed():
+    seed_matches()
+    return {"ok": True}
+
 app = FastAPI(
     title="World Cup Prediction API",
     description="API para predicciones públicas del Mundial. Visitantes anónimos o usuarios registrados.",
