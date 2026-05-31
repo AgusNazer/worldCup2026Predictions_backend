@@ -11,10 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 #para probar endpoint de la db
 from app.seeds.matches_2026 import seed_matches
 
-@app.post("/admin/seed-matches")
-def seed():
-    seed_matches()
-    return {"ok": True}
+
 
 app = FastAPI(
     title="World Cup Prediction API",
@@ -41,3 +38,8 @@ app.include_router(rankings_router)
 @app.get("/")
 def home():
     return {"message": "World Cup Predictor API"}
+
+@app.post("/admin/seed-matches")
+def seed():
+    seed_matches()
+    return {"ok": True}
