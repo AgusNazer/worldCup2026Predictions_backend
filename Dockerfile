@@ -10,5 +10,4 @@ COPY . .
 
 EXPOSE 8000
 
-# Remove --reload in production; use for development only
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000
