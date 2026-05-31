@@ -8,7 +8,7 @@ from app.routes.rankings import router as rankings_router
 
 from fastapi.middleware.cors import CORSMiddleware
 
-#para probar endpoint de la db
+#para probar endpoint de la db, borrar la funcion luego del deploy en produccion
 from app.seeds.matches_2026 import seed_matches
 
 
@@ -39,7 +39,3 @@ app.include_router(rankings_router)
 def home():
     return {"message": "World Cup Predictor API"}
 
-@app.post("/admin/seed-matches")
-def seed():
-    seed_matches()
-    return {"ok": True}
