@@ -19,11 +19,12 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS - Restrict to frontend origin only
-print("CORS_ORIGINS =", os.getenv("CORS_ORIGINS"))
+origins_raw = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://worldcup26predictors.netlify.app")
+allow_origins = [o.strip() for o in origins_raw.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:3000,https://worldcup26predictors.netlify.app").split(","),
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
