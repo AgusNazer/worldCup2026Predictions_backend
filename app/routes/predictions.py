@@ -6,7 +6,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.main import limiter
+from app.limiter import limiter
 from app.models import Prediction, User
 from app.schemas.prediction import PredictionCreate, PredictionOut
 from app.services.prediction_service import create_prediction

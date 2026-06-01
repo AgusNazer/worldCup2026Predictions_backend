@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Match
 from app.schemas.match import MatchOut
-from app.main import limiter
+from app.limiter import limiter
 
 router = APIRouter(prefix="/matches", tags=["matches"])
 
