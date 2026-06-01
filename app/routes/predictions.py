@@ -6,6 +6,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.main import limiter
 from app.models import Prediction, User
 from app.schemas.prediction import PredictionCreate, PredictionOut
 from app.services.prediction_service import create_prediction
@@ -34,9 +35,10 @@ def _get_or_set_anon_id(request: Request, response: Response) -> UUID:
 
 
 @router.post("", response_model=PredictionOut, status_code=status.HTTP_201_CREATED)
-def create_public_prediction(
-    payload: PredictionCreate,
+@limiter.limit("10/minute")
+async def create_public_prediction(
     request: Request,
+    payload: PredictionCreate,
     response: Response,
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_optional_current_user),
@@ -55,7 +57,8 @@ def create_public_prediction(
 
 
 @router.get("", response_model=list[PredictionOut])
-def list_public_predictions(match_id: int | None = None, db: Session = Depends(get_db)):
+@limiter.limit("20/minute")
+async def list_public_predictions(request: Request, match_id: int | None = None, db: Session = Depends(get_db)):
     query = db.query(Prediction)
     if match_id is not None:
         query = query.filter(Prediction.match_id == match_id)
@@ -63,7 +66,8 @@ def list_public_predictions(match_id: int | None = None, db: Session = Depends(g
 
 
 @router.get("/mine", response_model=list[PredictionOut])
-def my_or_anonymous_predictions(
+@limiter.limit("20/minute")
+async def my_or_anonymous_predictions(
     request: Request,
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_optional_current_user),
@@ -89,7 +93,9 @@ def my_or_anonymous_predictions(
 
 
 @router.get("/me", response_model=list[PredictionOut])
-def my_predictions(
+@limiter.limit("20/minute")
+async def my_predictions(
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
