@@ -19,7 +19,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
-origins_raw = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://worldcup26predictors.netlify.app")
+origins_raw = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://worldcup26predictors.netlify.app,https://worldcup26.anuarnazer.com")
 allow_origins = [o.strip() for o in origins_raw.split(",")]
 
 app.add_middleware(
