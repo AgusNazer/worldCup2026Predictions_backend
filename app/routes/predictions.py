@@ -1,6 +1,8 @@
+import os
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -10,6 +12,9 @@ from app.services.prediction_service import create_prediction
 from app.utils.deps import get_current_user, get_optional_current_user
 
 router = APIRouter(prefix="/predictions", tags=["predictions"])
+
+COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "lax")
+COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() == "true"
 
 
 def _get_or_set_anon_id(request: Request, response: Response) -> UUID:
@@ -21,7 +26,8 @@ def _get_or_set_anon_id(request: Request, response: Response) -> UUID:
         key="wc_anon_id",
         value=str(anon_id),
         httponly=True,
-        samesite="lax",
+        samesite=COOKIE_SAMESITE,
+        secure=COOKIE_SECURE,
         max_age=60 * 60 * 24 * 365,
     )
     return anon_id
@@ -64,7 +70,16 @@ def my_or_anonymous_predictions(
 ):
     query = db.query(Prediction)
     if current_user:
-        query = query.filter(Prediction.user_id == current_user.id)
+        anon_cookie = request.cookies.get("wc_anon_id")
+        if anon_cookie:
+            query = query.filter(
+                or_(
+                    Prediction.user_id == current_user.id,
+                    Prediction.anonymous_id == UUID(anon_cookie),
+                )
+            )
+        else:
+            query = query.filter(Prediction.user_id == current_user.id)
     else:
         anon_cookie = request.cookies.get("wc_anon_id")
         if not anon_cookie:

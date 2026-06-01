@@ -40,3 +40,9 @@ app.include_router(rankings_router)
 def home():
     return {"message": "World Cup Predictor API"}
 
+
+@app.get("/health")
+@app.head("/health")
+def health():
+    return {"status": "ok"}
+
