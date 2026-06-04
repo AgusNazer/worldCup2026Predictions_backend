@@ -1,4 +1,5 @@
 from uuid import UUID
+from datetime import datetime, timezone, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -95,3 +96,68 @@ def settle_match_points(db: Session, match_id: int) -> int:
     match.result_final = get_match_result_label(match.score_a, match.score_b)
     db.commit()
     return total
+
+
+def _resolve_prediction_owner(
+    prediction: Prediction,
+    *,
+    user_id: int | None,
+    anonymous_id: UUID | None,
+) -> bool:
+    if user_id is not None:
+        return prediction.user_id == user_id
+    if anonymous_id is not None:
+        return prediction.anonymous_id == anonymous_id
+    return False
+
+
+def update_prediction(
+    db: Session,
+    *,
+    prediction_id: int,
+    pred_a: int,
+    pred_b: int,
+    user_id: int | None = None,
+    anonymous_id: UUID | None = None,
+) -> Prediction:
+    prediction = db.query(Prediction).filter(Prediction.id == prediction_id).first()
+    if not prediction:
+        raise ValueError("Prediction not found")
+
+    if not _resolve_prediction_owner(prediction, user_id=user_id, anonymous_id=anonymous_id):
+        raise PermissionError("No tienes permiso para modificar esta predicción")
+
+    match = db.query(Match).filter(Match.id == prediction.match_id).first()
+    if not match:
+        raise ValueError("Match not found")
+
+    now_utc = datetime.now(timezone.utc)
+    editable_until = match.match_date - timedelta(days=1)
+    if now_utc >= editable_until:
+        raise ValueError("Solo puedes modificar una predicción hasta 24 horas antes del partido")
+
+    prediction.pred_a = pred_a
+    prediction.pred_b = pred_b
+    prediction.points_earned = 0
+
+    db.commit()
+    db.refresh(prediction)
+    return prediction
+
+
+def delete_prediction(
+    db: Session,
+    *,
+    prediction_id: int,
+    user_id: int | None = None,
+    anonymous_id: UUID | None = None,
+) -> None:
+    prediction = db.query(Prediction).filter(Prediction.id == prediction_id).first()
+    if not prediction:
+        raise ValueError("Prediction not found")
+
+    if not _resolve_prediction_owner(prediction, user_id=user_id, anonymous_id=anonymous_id):
+        raise PermissionError("No tienes permiso para eliminar esta predicción")
+
+    db.delete(prediction)
+    db.commit()

@@ -11,6 +11,11 @@ class PredictionCreate(BaseModel):
     pred_b: int = Field(ge=0)
 
 
+class PredictionUpdate(BaseModel):
+    pred_a: int = Field(ge=0)
+    pred_b: int = Field(ge=0)
+
+
 class PredictionOut(BaseModel):
     id: int
     user_id: Optional[int] = None

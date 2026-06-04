@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.limiter import limiter
 from app.models import Prediction, User
-from app.schemas.prediction import PredictionCreate, PredictionOut
-from app.services.prediction_service import create_prediction
+from app.schemas.prediction import PredictionCreate, PredictionOut, PredictionUpdate
+from app.services.prediction_service import create_prediction, update_prediction, delete_prediction
 from app.utils.deps import get_current_user, get_optional_current_user
 
 router = APIRouter(prefix="/predictions", tags=["predictions"])
@@ -105,3 +105,53 @@ async def my_predictions(
         .order_by(Prediction.prediction_date.desc())
         .all()
     )
+
+
+@router.put("/{prediction_id}", response_model=PredictionOut)
+@limiter.limit("20/minute")
+async def update_my_prediction(
+    request: Request,
+    prediction_id: int,
+    payload: PredictionUpdate,
+    response: Response,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
+):
+    anon_id = None if current_user else _get_or_set_anon_id(request, response)
+    try:
+        return update_prediction(
+            db,
+            prediction_id=prediction_id,
+            pred_a=payload.pred_a,
+            pred_b=payload.pred_b,
+            user_id=current_user.id if current_user else None,
+            anonymous_id=anon_id,
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+@router.delete("/{prediction_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("20/minute")
+async def delete_my_prediction(
+    request: Request,
+    prediction_id: int,
+    response: Response,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
+):
+    anon_id = None if current_user else _get_or_set_anon_id(request, response)
+    try:
+        delete_prediction(
+            db,
+            prediction_id=prediction_id,
+            user_id=current_user.id if current_user else None,
+            anonymous_id=anon_id,
+        )
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
