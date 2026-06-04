@@ -1,7 +1,6 @@
 alembic
 fastapi
 uvicorn
-newrelic
 sqlalchemy
 psycopg2-binary
 python-dotenv

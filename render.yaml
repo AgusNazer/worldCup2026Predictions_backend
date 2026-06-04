@@ -9,7 +9,7 @@ services:
     plan: free
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: alembic upgrade head && newrelic-admin run-program uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     autoDeploy: true
     envVars:
@@ -23,8 +23,4 @@ services:
         value: "60"
       - key: CORS_ORIGINS
         value: "http://localhost:3000,https://worldcup26predictors.netlify.app"
-      - key: NEW_RELIC_APP_NAME
-        value: "worldcup-backend"
-      - key: NEW_RELIC_ENVIRONMENT
-        value: "production"
 
